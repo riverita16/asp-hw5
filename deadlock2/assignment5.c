@@ -179,8 +179,10 @@ static long e2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
              }
           }
           devc->mode = MODE1;
-	  msleep(2000); // ADDED FOR DEADLOCK 2
-          devc->count2--;
+
+	  msleep(5000); // ADDED FOR DEADLOCK 2
+          
+	  devc->count2--;
           devc->count1++;
           down_interruptible(&devc->sem2);
           up(&devc->sem1);

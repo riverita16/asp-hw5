@@ -48,7 +48,7 @@ int e2_open(struct inode *inode, struct file *filp)
         devc->count1++;
         up(&devc->sem1);
         
-	msleep(100); // ADDED LINE FOR DEADLOCK 1 
+	msleep(5000); // ADDED LINE FOR DEADLOCK 1 
 	
 	down_interruptible(&devc->sem2);
         return 0;

@@ -11,40 +11,44 @@
 #define E2_IOCMODE1 _IO(CDRV_IOC_MAGIC, 1)
 #define E2_IOCMODE2 _IO(CDRV_IOC_MAGIC, 2)
 
-void* open_thread(void* arg) {
-	while(1) {
-		printf("[Open Thread] Attempting to open %s...\n", DEVICE);
-		int fd = open(DEVICE, O_RDWR);
-		if (fd >= 0) {
-			printf("[Open Thread] Now closing...\n");
-			close(fd);
-		}
-		usleep(10000);
-	}
+void* thread1(void* arg) {
+	printf("[THREAD 1] opening device in MODE1...\n");
+	int fd = open(DEVICE, O_RDWR);
+	if (fd < 0) perror("open");
+	printf("[THREAD 1] device opened\n");
+
+	// switch to MODE2
+	printf("[THREAD 1] switching to MODE2\n");
+	ioctl(fd, E2_IOCMODE2);
+
+	// back to MODE1
+	printf("[THREAD 1] switching to MODE1 will block\n");
+	ioctl(fd, E2_IOCMODE1);
+
+	close(fd);
+	printf("[THREAD 1] done -- should not print\n");
 	return NULL;
 }
 
-void* ioctl_thread(void* arg) {
+void* thread2(void* arg) {
+	sleep(1); // ensure open runs first
 	int fd = open(DEVICE, O_RDWR);
-	if (fd < 0) { perror("ioctl open"); exit(1); }
-
-	while(1) {
-		printf("[IOCTL Thread] Switching to MODE1...\n");
-		ioctl(fd, E2_IOCMODE1);
-		printf("[IOCTL Thread] Switching to MODE2...\n");
-		ioctl(fd, E2_IOCMODE2);
-	}
+	printf("[THREAD 2] opened device\n");
+	printf("[THREAD 2] release will block\n");	
+	close(fd);
+	printf("[THREAD 2] done -- should not print\n");
 	return NULL;
 }
 
 int main() {
-	// create 2 threads -- one to trigger opens and one for ioctl mode switches
 	pthread_t t1, t2;
-	pthread_create(&t1, NULL, open_thread, NULL);
-	pthread_create(&t2, NULL, ioctl_thread, NULL);
+
+	// start in MODE1
+	pthread_create(&t1, NULL, thread1, NULL);
+	pthread_create(&t2, NULL, thread2, NULL);
 
 	pthread_join(t1, NULL);
 	pthread_join(t2, NULL);
+
 	return 0;
 }
-

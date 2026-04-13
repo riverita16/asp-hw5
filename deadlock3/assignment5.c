@@ -11,7 +11,7 @@
 #include <linux/moduleparam.h>
 #include <linux/device.h>
 #include <linux/ioctl.h>
-#include <linux/delay.h>
+
 
 #define MYDEV_NAME "a6"
 #define ramdisk_size (size_t) (16 * PAGE_SIZE)
@@ -46,9 +46,6 @@ int e2_open(struct inode *inode, struct file *filp)
     if (devc->mode == MODE1) {
         devc->count1++;
         up(&devc->sem1);
-
-	msleep(3000); // ADDED LINE FOR DEADLOCK 3
-
         down_interruptible(&devc->sem2);
         return 0;
     }
@@ -64,7 +61,10 @@ int e2_release(struct inode *inode, struct file *filp)
     struct e2_dev *devc = container_of(inode->i_cdev, struct e2_dev, cdev);
     down_interruptible(&devc->sem1);
     if (devc->mode == MODE1) {
-        devc->count1--;
+    
+	msleep(5000); // ADDED FOR DEADLOCK 3
+	
+	devc->count1--;
         if (devc->count1 == 1)
             wake_up_interruptible(&(devc->queue1));
 	up(&devc->sem2);
@@ -184,7 +184,7 @@ static long e2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
           devc->mode = MODE1;
           devc->count2--;
           devc->count1++;
-	  down_interruptible(&devc->sem2);
+          down_interruptible(&devc->sem2);
           up(&devc->sem1);
           break;			
        default :

@@ -1,0 +1,1 @@
+savedcmd_/home/ala/asp-hw5/deadlock4/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/ala/asp-hw5/deadlock4/Module.symvers -T /home/ala/asp-hw5/deadlock4/modules.order -i Module.symvers -e 

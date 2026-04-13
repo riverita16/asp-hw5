@@ -31,6 +31,27 @@ When switching to MODE1 in e2\_ioctl the program acquires sem1 and attempts to a
 
 **Relevant Lines**
 
+3. e2\_ioctl
+
+*see deadlock3 for test program and driver*\
+
+When one process calls ioctl to switch back to MODE1 from MODE2 and another process is already in MODE1 and holding sem2, the former ioctl process deadlocks while holding sem1, making a successful release impossible.\
+
+Modification required at in e2\_ioctl. We add a sleep before the down on sem2 when switching into MODE1.\
+
+**Relevant Lines**
+185
+
+4. e2\_open 
+
+*see deadlock4 for test program*\
+
+When two processes open in MODE1, the first downs and consumes sem2, but the second blocks forever on sem2 since up on sem2 does not happen until release.\
+
+No additional sleep statements or modifications are required for this one.\
+
+**Relevant Lines**
+49
 
 ## Race Condition Critical Regions
 

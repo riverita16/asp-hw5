@@ -51,6 +51,7 @@ No additional sleep statements or modifications are required for this one.
 ## Race Condition Critical Regions
 
 1. e2\_read (MODE1) vs e2\_write (MODE1)
+
 **e2_read (84-90)**  
 Data accessed: devc-\>ramdisk (read), \*f\_pos  
 Locks held: none  
@@ -63,6 +64,7 @@ Race **exists** because both functions release sem1 before accessing the ramdisk
 and f\_pos. MODE1 is intended to be single access, but if a second process inherits an fd and attempts to read or write concurrently, both processes would be successful without locks.  
 
 2. e2\_read (MODE2) vs e2\_write (MODE2)
+
 **e2_read (98-100)**  
 Data accessed: devc-\>ramdisk (read), \*f\_pos  
 Locks held: sem1 
@@ -74,6 +76,7 @@ Locks held: sem1
 Race does **not exist** during single read and write in MODE2 because sem1 is held throughout the copy in both functions. They are mutually exclusive. 
 
 3. e2\_open vs e2\_ioctl(E2\_IOCMODE2)
+
 **e2_open (45-51)**  
 Data accessed: devc-\>mode, devc-\>count1  
 Locks held: sem1 during  mode check and count1 increment -- released before down(sem2)
@@ -85,6 +88,7 @@ Locks held: sem1 during most of case -- released during wait
 Race **exists** on devc-\>mode. After e2\_open() reads mode==MODE1, increments count1, and releases sem1, the ioctl can acquire sem1 and change devc-\>mode to MODE2 before e2\_open() reaches down(sem2). This means both functions will complete under different conditions, causing inconsistencies with fd.
 
 4. e2\_release vs e2\_ioctl(E2\_IOCMODE1)
+
 **e2_release (62, 69-74)**  
 Data accessed: devc-\>mode, devc-\>count2  
 Locks held: sem1
